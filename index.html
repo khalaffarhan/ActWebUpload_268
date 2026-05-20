@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galeri Unggah Foto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-badge">📸 Studio Foto</div>
+        <h1>Galeri <span>Unggah</span> Foto</h1>
+        <p>Unggah dan kelola koleksi foto Anda dengan mudah</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('upload', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Unggah Foto
+        </button>
+        <a class="nav-link" href="gallery.php">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Daftar Berkas
+            <span class="count-badge" id="fileCount">0</span>
+        </a>
+    </nav>
+
+    <div class="container">
+
+        <!-- Upload Panel -->
+        <div class="panel active" id="panel-upload">
+            <div class="upload-card">
+                <div class="upload-card-header">
+                    <h2>Unggah Foto Baru</h2>
+                    <p>Seret &amp; lepas foto, atau klik untuk memilih dari galeri</p>
+                </div>
+                <div class="upload-card-body">
+                    <!-- Drop Zone + Preview jadi satu area -->
+                    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileToUpload').click()">
+
+                        <!-- State: belum pilih foto -->
+                        <div id="dzEmpty">
+                            <div class="icon-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                            </div>
+                            <h3>Pilih atau Seret Foto</h3>
+                            <p>Klik area ini atau seret foto ke sini untuk mengunggah</p>
+                            <div class="formats">
+                                <span class="format-tag">JPG</span>
+                                <span class="format-tag">JPEG</span>
+                                <span class="format-tag">PNG</span>
+                                <span class="format-tag">GIF</span>
+                                <span class="format-tag">WEBP</span>
+                                <span class="format-tag">BMP</span>
+                            </div>
+                        </div>
+
+                        <!-- State: foto sudah dipilih → preview besar -->
+                        <div id="dzPreview" style="display:none; width:100%; position:relative;">
+                            <img id="previewImg" src="" alt="preview"
+                                 style="width:100%; max-height:340px; object-fit:contain; border-radius:10px; display:block;">
+                            <div id="previewMeta"
+                                 style="margin-top:0.9rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+                                <div style="text-align:left; overflow:hidden;">
+                                    <div id="previewName" style="font-weight:600; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
+                                    <div id="previewSize" style="font-size:0.8rem; color:var(--muted); margin-top:0.15rem;"></div>
+                                </div>
+                                <button type="button" id="removeBtn"
+                                        style="flex-shrink:0; background:rgba(192,57,43,0.12); border:none; color:var(--danger); border-radius:8px; padding:0.4rem 0.8rem; cursor:pointer; font-size:0.78rem; font-weight:500; display:flex; align-items:center; gap:0.3rem; transition:background 0.2s;"
+                                        onmouseover="this.style.background='var(--danger)';this.style.color='white'"
+                                        onmouseout="this.style.background='rgba(192,57,43,0.12)';this.style.color='var(--danger)'"
+                                        onclick="event.stopPropagation(); removeFile()">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Ganti Foto
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Input hanya menerima foto -->
+                    <input type="file" name="fileToUpload" id="fileToUpload"
+                           accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp"
+                           onchange="handleFileSelect(this)">
+
+                    <!-- Progress -->
+                    <div class="progress-wrap" id="progressWrap">
+                        <div class="progress-label">Mengunggah...</div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div class="alert alert-error" id="alertError">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+                        <span id="alertErrorMsg"></span>
+                    </div>
+                    <div class="alert alert-success" id="alertSuccess">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span id="alertSuccessMsg"></span>
+                    </div>
+
+                    <button type="button" class="btn-upload" id="uploadBtn" disabled onclick="doUpload()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Unggah Foto
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3>🗑️ Hapus Berkas?</h3>
+            <p>Berkas <strong id="deleteFileName"></strong> akan dihapus secara permanen dan tidak dapat dipulihkan.</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Batal</button>
+                <button class="btn-confirm-delete" onclick="confirmDelete()">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let fileToDelete = null;
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // Drag & Drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFileSelect(input) {
+            if (input.files.length > 0) processFile(input.files[0]);
+        }
+
+        const ALLOWED_TYPES = ['image/jpeg','image/jpg','image/png','image/gif','image/webp','image/bmp'];
+
+        function processFile(file) {
+            hideAlerts();
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                showError('Format tidak didukung! Hanya foto (JPG, PNG, GIF, WEBP, BMP) yang boleh diunggah.');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showError('Ukuran foto terlalu besar! Maksimal 5MB.');
+                return;
+            }
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = e => {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('previewName').textContent = file.name;
+                document.getElementById('previewSize').textContent = formatSize(file.size);
+                // sembunyikan teks awal, tampilkan preview besar
+                document.getElementById('dzEmpty').style.display   = 'none';
+                document.getElementById('dzPreview').style.display = 'block';
+                document.getElementById('uploadBtn').disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('fileToUpload').value = '';
+            // kembalikan ke state awal
+            document.getElementById('dzEmpty').style.display   = 'block';
+            document.getElementById('dzPreview').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+            hideAlerts();
+        }
+
+        function doUpload() {
+            if (!selectedFile) return;
+            const formData = new FormData();
+            formData.append('fileToUpload', selectedFile);
+            formData.append('submit', '1');
+
+            const btn     = document.getElementById('uploadBtn');
+            const progress= document.getElementById('progressWrap');
+            const fill    = document.getElementById('progressFill');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Mengunggah...';
+            progress.classList.add('visible');
+            fill.style.width = '0%';
+            hideAlerts();
+
+            const xhr = new XMLHttpRequest();
+            xhr.upload.onprogress = e => {
+                if (e.lengthComputable) fill.style.width = (e.loaded / e.total * 100) + '%';
+            };
+            xhr.onload = () => {
+                progress.classList.remove('visible');
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Unggah Foto';
+                if (xhr.status === 200) {
+                    const resp = xhr.responseText.trim();
+                    if (resp.toLowerCase().includes('telah diunggah') || resp.toLowerCase().includes('berhasil')) {
+                        showSuccess('✅ Foto berhasil diunggah! Cek halaman Daftar Berkas.');
+                        removeFile(); // reset drop zone ke state awal
+                        updateFileCount();
+                    } else {
+                        showError(resp || 'Terjadi kesalahan saat mengunggah.');
+                        btn.disabled = false;
+                    }
+                } else {
+                    showError('Gagal menghubungi server. Coba lagi.');
+                    btn.disabled = false;
+                }
+            };
+            xhr.onerror = () => {
+                progress.classList.remove('visible');
+                showError('Koneksi gagal. Periksa koneksi Anda.');
+                btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Unggah Foto';
+                btn.disabled = false;
+            };
+            xhr.open('POST', 'upload.php');
+            xhr.send(formData);
+        }
+
+        function updateFileCount() {
+            fetch('upload.php?action=list')
+                .then(r => r.json())
+                .then(data => { document.getElementById('fileCount').textContent = (data.files || []).length; })
+                .catch(() => {});
+        }
+
+        function closeModal() { document.getElementById('deleteModal').classList.remove('open'); }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+            return (bytes/1048576).toFixed(1) + ' MB';
+        }
+
+        function showError(msg) {
+            document.getElementById('alertErrorMsg').textContent = msg;
+            document.getElementById('alertError').classList.add('visible');
+        }
+        function showSuccess(msg) {
+            document.getElementById('alertSuccessMsg').textContent = msg;
+            document.getElementById('alertSuccess').classList.add('visible');
+        }
+        function hideAlerts() {
+            document.getElementById('alertError').classList.remove('visible');
+            document.getElementById('alertSuccess').classList.remove('visible');
+        }
+
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        updateFileCount();
+    </script>
+</body>
+</html>
